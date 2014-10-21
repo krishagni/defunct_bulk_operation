@@ -25,11 +25,7 @@ L-->
 
 	<property file="${basedir}/conf/bulkOperation.properties"/>
 
-	<loadfile property="dist.revision" srcFile="./.svn/entries">
-		<filterchain>
-			<headfilter lines="1" skip="4"/>
-		</filterchain>
-	</loadfile>
+
 
 	<property name="software.dir" location="${basedir}/../" />
 	<property name="src.dir" location="${basedir}/src/main/java"/>
@@ -136,7 +132,7 @@ L-->
 
 
 
-	<target name="compile" depends="clean, resolve" description="java classes are compiled">
+	<target name="compile" depends="clean" description="java classes are compiled">
 		<mkdir dir="${temp.dir}" />
 		<echo message="Compling classes................" />
 		<javac destdir="${temp.dir}" includes="**/*.*" debug="on" includeAntRuntime="false" target="1.5" nowarn="on">
@@ -189,7 +185,6 @@ L-->
 				    <attribute name="Version" value="${bulkoperator.jar.version}"/>
 					<attribute name="Built-By" value="${bulkoperator.jar.creator}" />
 					<attribute name="Build-on" value="${TODAY} ${TSTAMP}" />
-			   	   	<attribute name="SVN-URL" value="${dist.revision}" />
 			   	</section>
             </manifest>
         </jar>
@@ -205,7 +200,6 @@ L-->
 				<attribute name="Version" value="${bulkoperator.jar.version}" />
 				<attribute name="Built-By" value="${user.name}" />
 				<attribute name="Build-on" value="${TODAY} ${TSTAMP}" />
-				<attribute name="SVN-URL" value="${dist.revision}" />
 			</section>
 		</manifest>
 	</target>
