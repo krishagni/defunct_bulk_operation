@@ -19,6 +19,9 @@ import edu.wustl.bulkoperator.csv.CsvReader;
 import edu.wustl.bulkoperator.metadata.BulkOperationClass;
 import edu.wustl.bulkoperator.util.BulkOperationException;
 import edu.wustl.bulkoperator.util.BulkOperationUtility;
+import edu.wustl.bulkoperator.util.BulkOperationProperties;
+import edu.wustl.bulkoperator.util.BulkProcessor;
+import edu.wustl.bulkoperator.util.ServiceAction;
 import edu.wustl.common.beans.SessionDataBean;
 import edu.wustl.common.util.global.CommonServiceLocator;
 import edu.wustl.common.util.logger.Logger;
@@ -48,58 +51,25 @@ public class StaticBulkOperationProcessor extends AbstractBulkOperationProcessor
 			throws BulkOperationException, Exception
 	{
 		Object staticObject = null;
-		DAO dao=null;
-		final IDAOFactory daofactory = DAOConfigFactory.getInstance().getDAOFactory(
-				CommonServiceLocator.getInstance().getAppName());
-		dao = daofactory.getDAO();
-		dao.openSession(null);
+
 		try
 		{
-			AbstractBulkOperationAppService bulkOprAppService = AbstractBulkOperationAppService.getInstance(
-					serviceInformationObject.getServiceImplementorClassName(), true,
-					serviceInformationObject.getUserName(), null);
-
+			staticObject = getEntityObject(csvReader);
+			processObject(staticObject, bulkOperationClass, csvReader, "", false, csvRowNumber);
+			BulkProcessor bulkProcessor = BulkOperationProperties.getInstance().getBulkProcessor();
+			
 			if (bulkOperationClass.isUpdateOperation())
 			{
-				String hql = BulkOperationUtility.createHQL(bulkOperationClass, csvReader);
-				ArrayList<Object> objects=(ArrayList<Object>)dao.executeQuery(hql);
-				staticObject =objects.get(0);
-				if (staticObject == null)
-				{
-					throw new BulkOperationException("Could not find the specified data in the database.");
-				}
-				else
-				{
-					
-					processObject(staticObject, bulkOperationClass, csvReader, "", false, csvRowNumber);
-					try
-					{
-						dao.closeSession();
-						bulkOprAppService.update(staticObject);
-					}
-					catch (BulkOperationException bulkOprExp)
-					{
-						throw bulkOprExp;
- 					}
-				}
+				staticObject = bulkProcessor.processObject(staticObject, ServiceAction.UPDATE, sessionDataBean);
 			}
 			else
 			{
-				staticObject = getEntityObject(csvReader);
-				processObject(staticObject, bulkOperationClass, csvReader, "", false, csvRowNumber);
-				bulkOprAppService.insert(staticObject);
+				staticObject = bulkProcessor.processObject(staticObject, ServiceAction.ADD, sessionDataBean);
 			}
 		}
 		catch (Exception exp){
 			logger.error(exp.getMessage(), exp);
 			throw exp;
-		}
-		finally
-		{
-			if(dao!=null)
-			{
-				dao.closeSession();
-			}
 		}
 		return staticObject;
 	}

@@ -12,6 +12,7 @@ package edu.wustl.bulkoperator.processor;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -181,7 +182,7 @@ public abstract class AbstractBulkOperationProcessor {
 					}
 					String roleName = containmentMigrationClass.getRoleName();
 					
-					BeanUtils.setProperty(mainObj,roleName,containmentObjectCollection);
+					setContainmentObjectProperty(containmentMigrationClass, mainObj, roleName, containmentObjectCollection);
 				} else if (cardinality != null && cardinality.equals("1")
 						&& !cardinality.equals("")) {
 					
@@ -227,6 +228,25 @@ public abstract class AbstractBulkOperationProcessor {
 			throw new BulkOperationException(errorkey, exp, exp.getMessage());
 		}
 	}
+	
+    private void setContainmentObjectProperty(BulkOperationClass containmentMigrationClass, Object mainObject, String name, 
+            Collection valueToSet) throws Exception {
+	    /*
+	     * This method is introduced to handle List type Containment assignment
+	     * Do not use getField() or getDeclaredField() to simplify the below processing
+	     * #1 getField() doesn't fetch private fields of class
+	     * #2 getDeclaredField() can fetch private fields of class, but can't fetch fields that are inherited from parent class
+	     */
+	    
+	    String getterMethod = "get" + Character.toUpperCase(name.charAt(0)) + name.substring(1);
+	    Method method = mainObject.getClass().getMethod(getterMethod, null);
+	    
+	    if (List.class.getName().equals(method.getReturnType().getName())) { 
+	            valueToSet = new ArrayList(valueToSet);
+	    } 
+	    
+	    BeanUtils.setProperty(mainObject,name,valueToSet);
+    }
 
 	/**
 	 * 
